@@ -1,8 +1,6 @@
-import edu.princeton.cs.algs4.StdRandom;
-import edu.princeton.cs.algs4.StdStats;
+
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
-import edu.princeton.cs.algs4.StdIn;
 
 public class Percolation {
     private WeightedQuickUnionUF weightedQuickUnionUF;
@@ -44,6 +42,7 @@ public class Percolation {
         }
         if (!outOfIndices(row, col + 1) && isOpen(row, col + 1)){
             weightedQuickUnionUF.union((row - 1) * N + col, (row - 1) * N + col + 1);
+            a[(row - 1) * N + col - 1] = true;
         }
         if (!outOfIndices(row, col + 1)){
             a[(row - 1) * N + col - 1] = true;
