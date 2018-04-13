@@ -31,7 +31,7 @@ public class Percolation {
         return weightedQuickUnionUF.connected(0, N * N + 1);
     }
 
-    public boolean outOfIndices(int row, int col) {
+    private boolean outOfIndices(int row, int col) {
         if ((row > 0 && row <= N) && (col > 0 && col <= N))
             return false;
         return true;
