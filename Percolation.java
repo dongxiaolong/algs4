@@ -1,73 +1,131 @@
-
+/******************************************************************************
+ *  Compilation:  javac-algs4 Percolation.java
+ *  Execution:    java-algs4 Percolation < input.txt
+ *  Dependencies: None
+ *
+ *  This program reads standard input.
+ *
+ *    - Reads the grid size n of the percolation system.
+ *    - Creates an n-by-n grid of sites (intially all blocked)
+ *    - Reads in a sequence of sites (row i, column j) to open.
+ *
+ *  After each site is opened, it checks if the system is percolated.
+ ******************************************************************************/
+import edu.princeton.cs.algs4.StdIn;
+import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 public class Percolation {
-    private WeightedQuickUnionUF weightedQuickUnionUF;
-    private boolean[] a;
-    private int N;
-    private int numberopen;
-
+    private int gridLength;
+    private boolean[] grid; // true:open, false:blocked
+    private WeightedQuickUnionUF wqu; // with virtual top & bottom
+    private WeightedQuickUnionUF wqu2; // without virtual bottom
+    private int virtualTop;
+    // create n-by-n grid, with all sites blocked
     public Percolation(int n) {
-        N = n;//N*N gird system
-        numberopen = 0;//open sites number
-        if (n <= 0)
-            throw new IllegalArgumentException("n must be a positive number.");
-        weightedQuickUnionUF = new WeightedQuickUnionUF(n * n + 2);
-        a = new boolean[n * n];
+        if (n <= 0) {
+            throw new IllegalArgumentException("length must be positive");
+        }
+        gridLength = n;
+        virtualTop = gridLength * gridLength;
+        grid = new boolean[virtualTop];
+        // the last two are virtual top & virtual bottom sites
+        wqu = new WeightedQuickUnionUF(virtualTop + 2);
+        wqu2 = new WeightedQuickUnionUF(virtualTop + 1);
     }
-
-    public boolean isOpen(int row, int col) {
-        return a[(row - 1) * N + col - 1] == true;
+    private void validateIndecies(int row, int col) {
+        if (row <= 0 || row > gridLength)
+            throw new IndexOutOfBoundsException("row index out of bounds");
+        if (col <= 0 || col > gridLength)
+            throw new IndexOutOfBoundsException("col index out of bounds");
     }
-
-    public boolean isFull(int row, int col) {//connected to an open site in the top row
-        return weightedQuickUnionUF.connected((row - 1) * N + col, 0);
+    private int xyTo1D(int row, int col) {
+        return (row - 1) * gridLength + (col - 1);
     }
-
-    public int numberOfOpenSites() {
-        return numberopen;
-    }
-
-    public boolean percolates() {
-        return weightedQuickUnionUF.connected(0, N * N + 1);
-    }
-
-    private boolean outOfIndices(int row, int col) {
-        if ((row > 0 && row <= N) && (col > 0 && col <= N))
-            return false;
-        return true;
-    }
-
+    // open site (row, col) if it is not open already
     public void open(int row, int col) {
-        if (outOfIndices(row, col))
-            throw new IllegalArgumentException("outOfIndices......");
-        if (isOpen(row, col))
+        validateIndecies(row, col);
+        int self = xyTo1D(row, col);
+        if (grid[self]) {
             return;
-        if (row == 1) {//top sites
-            weightedQuickUnionUF.union(0, (row - 1) * N + col);
-            a[(row - 1) * N + col - 1] = true;
-        } else if (row == N) {
-            weightedQuickUnionUF.union(N * N + 1, (row - 1) * N + col);
-            a[(row - 1) * N + col - 1] = true;
         }
-        if (!outOfIndices(row - 1, col) && isOpen(row - 1, col)) {//上site
-            weightedQuickUnionUF.union((row - 1) * N + col, (row - 2) * N + col);
-            a[(row - 1) * N + col - 1] = true;
+        grid[self] = true;
+        if (row == 1) {
+            wqu.union(self, virtualTop);
+            wqu2.union(self, virtualTop);
         }
-        if (!outOfIndices(row + 1, col) && isOpen(row + 1, col)) {//下site
-            weightedQuickUnionUF.union(row * N + col, (row - 1) * N + col);
-            a[(row - 1) * N + col - 1] = true;
+        if (row == gridLength) {
+            wqu.union(self, virtualTop + 1);
         }
-        if (!outOfIndices(row, col - 1) && isOpen(row, col - 1)) {//左site
-            weightedQuickUnionUF.union((row - 1) * N + col - 1, (row - 1) * N + col);
-            a[(row - 1) * N + col - 1] = true;
+        int other;
+        if (row > 1) { // up
+            other = xyTo1D(row - 1, col);
+            if (grid[other]) {
+                wqu.union(self, other);
+                wqu2.union(self, other);
+            }
         }
-        if (!outOfIndices(row, col + 1) && isOpen(row, col + 1)) {//右site
-            weightedQuickUnionUF.union((row - 1) * N + col, (row - 1) * N + col + 1);
-            a[(row - 1) * N + col - 1] = true;
+        if (row < gridLength) { // down
+            other = xyTo1D(row + 1, col);
+            if (grid[other]) {
+                wqu.union(self, other);
+                wqu2.union(self, other);
+            }
         }
-        if (!outOfIndices(row, col + 1)) {
-            a[(row - 1) * N + col - 1] = true;
+        if (col > 1) { // left
+            other = xyTo1D(row, col - 1);
+            if (grid[other]) {
+                wqu.union(self, other);
+                wqu2.union(self, other);
+            }
         }
-        numberopen++;
+        if (col < gridLength) { // right
+            other = xyTo1D(row, col + 1);
+            if (grid[other]) {
+                wqu.union(self, other);
+                wqu2.union(self, other);
+            }
+        }
+    }
+    // is site (row, col) open?
+    public boolean isOpen(int row, int col) {
+        validateIndecies(row, col);
+        return grid[xyTo1D(row, col)];
+    }
+    // is site (row, col) full?
+    public boolean isFull(int row, int col) {
+        validateIndecies(row, col);
+        return wqu2.connected(virtualTop, xyTo1D(row, col));
+    }
+    // does the system percolate?
+    public boolean percolates() {
+        return wqu.connected(virtualTop, virtualTop + 1);
+    }
+    // test client (optional)
+    public static void main(String[] args) {
+        /*
+        Percolation percolation = new Percolation(0);
+        Percolation percolation = new Percolation(1);
+        percolation.open(0, 1);
+        percolation.open(1, 0);
+        */
+        /*
+        Percolation percolation = new Percolation(2);
+        percolation.open(1, 1);
+        percolation.open(1, 2);
+        for (int i = 1; i <= 2; i++) {
+            for(int j = 1; j <= 2; j++) {
+                StdOut.println("" + percolation.isFull(i, j) + " " + percolation.isOpen(i, j));
+            }
+        }
+        StdOut.println("percolation is " + percolation.percolates());
+        */
+        int n = StdIn.readInt();
+        Percolation percolation = new Percolation(n);
+        while (!StdIn.isEmpty()) {
+            int row = StdIn.readInt();
+            int col = StdIn.readInt();
+            percolation.open(row, col);
+        }
+        StdOut.println("percolation is " + percolation.percolates());
     }
 }
