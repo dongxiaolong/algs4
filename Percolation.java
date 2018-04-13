@@ -20,6 +20,7 @@ public class Percolation {
     private WeightedQuickUnionUF wqu; // with virtual top & bottom
     private WeightedQuickUnionUF wqu2; // without virtual bottom
     private int virtualTop;
+    private int numberopen;
     // create n-by-n grid, with all sites blocked
     public Percolation(int n) {
         if (n <= 0) {
@@ -31,6 +32,9 @@ public class Percolation {
         // the last two are virtual top & virtual bottom sites
         wqu = new WeightedQuickUnionUF(virtualTop + 2);
         wqu2 = new WeightedQuickUnionUF(virtualTop + 1);
+    }
+    public int numberOfOpenSites() {
+        return numberopen;
     }
     private void validateIndecies(int row, int col) {
         if (row <= 0 || row > gridLength)
@@ -85,6 +89,7 @@ public class Percolation {
                 wqu2.union(self, other);
             }
         }
+        numberopen++;
     }
     // is site (row, col) open?
     public boolean isOpen(int row, int col) {
