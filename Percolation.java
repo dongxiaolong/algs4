@@ -1,8 +1,7 @@
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.StdStats;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+
 import edu.princeton.cs.algs4.StdIn;
 
 public class Percolation {
