@@ -72,7 +72,7 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
             resize(rgArrays.length / 2 );
         return delItem;
     }
-    public Item Sample(){
+    public Item sample(){
         if (size == 0)
             throw new NoSuchElementException("the RandomizeQueue is empty");
         return rgArrays[StdRandom.uniform(0, size)];
